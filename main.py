@@ -4,7 +4,7 @@ import json
 from bs4 import BeautifulSoup
 
 # ---- AYARLAR ----
-URUN_URL = "https://www.lcw.com/bisiklet-yaka-uzun-kollu-erkek-kalin-sweatshirt-siyah-o-3370422"
+URUN_URL = "https://www.lcw.com/polo-yaka-uzun-kollu-pike-erkek-tisort-siyah-o-4581357"
 TAKIP_EDILEN_BEDEN = "XS"
 STATE_FILE = "state.json" # Stok bildiriminin daha önce yapılıp yapılmadığını takip etmek için
 
@@ -61,4 +61,5 @@ def stok_kontrol_et():
         print(f"!!! Bir Hata Oluştu: {e}")
 
 if __name__ == "__main__":
+
     stok_kontrol_et()
