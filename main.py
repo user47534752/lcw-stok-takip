@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # ---- AYARLAR ----
-URUN_URL = "https://www.lcw.com/polo-yaka-uzun-kollu-pike-erkek-tisort-siyah-o-4581357"
+URUN_URL = "https://www.lcw.com/bisiklet-yaka-uzun-kollu-erkek-kalin-sweatshirt-siyah-o-3370422"
 TAKIP_EDILEN_BEDEN = "XS"
 
 # GitHub Secrets'tan Telegram bilgilerini çek
@@ -70,4 +70,5 @@ def stok_kontrol_et():
 
 if __name__ == "__main__":
     stok_kontrol_et()
+
 
