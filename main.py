@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 # ---- AYARLAR ----
 URUN_URL = "https://www.lcw.com/bisiklet-yaka-uzun-kollu-erkek-kalin-sweatshirt-siyah-o-3370422"
 TAKIP_EDILEN_BEDEN = "XS"
-# Sayaç ve zaman bilgilerini proje klasöründe bu dosyada tutacak
 STATE_FILE = "state.json" 
 
 # GitHub Secrets'tan Telegram bilgilerini çek
@@ -17,7 +16,6 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
 
 
 def telegram_bildirim_gonder(mesaj):
-    """Belirtilen mesajı Telegram'a gönderir."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("Telegram bilgileri (Secrets) ayarlanmamış.")
         return
@@ -30,21 +28,32 @@ def telegram_bildirim_gonder(mesaj):
         print(f"Telegram hatası: {e}")
 
 def load_state():
-    """Hafıza dosyasından (state.json) sayaçları ve zamanı yükler."""
     try:
         with open(STATE_FILE, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        # Eğer dosya yoksa, varsayılan değerlerle başlat
         return {'successful_scans': 0, 'failed_scans': 0, 'last_report_timestamp': 0, 'notified_in_stock': False}
 
 def save_state(state):
-    """Sayaçları ve zamanı hafıza dosyasına kaydeder."""
     with open(STATE_FILE, 'w') as f:
         json.dump(state, f)
-
+    # --- YENİ EKLENDİ: Dosyayı GitHub'a geri kaydetme ---
+    try:
+        print("state.json dosyası GitHub deposuna kaydediliyor...")
+        os.system('git config --global user.email "action@github.com"')
+        os.system('git config --global user.name "GitHub Action"')
+        os.system('git add state.json')
+        # Sadece değişiklik varsa commit at
+        if os.system('git diff-index --quiet HEAD') != 0:
+            os.system('git commit -m "Günlük durumu güncelle"')
+            os.system('git push')
+            print("Durum başarıyla GitHub'a kaydedildi.")
+        else:
+            print("Durum dosyasında değişiklik yok, commit atlanıyor.")
+    except Exception as e:
+        print(f"state.json dosyası GitHub'a kaydedilirken hata oluştu: {e}")
+        
 def gunluk_rapor_gonder(state):
-    """Günlük özet raporunu Telegram'a gönderir."""
     print("Günlük rapor gönderme zamanı geldi...")
     rapor_mesaji = (f"📊 LCW Stok Takip Günlük Raporu 📊\n\n"
                     f"Son 24 saatlik çalışma özeti:\n"
@@ -53,7 +62,6 @@ def gunluk_rapor_gonder(state):
     telegram_bildirim_gonder(rapor_mesaji)
 
 def stok_kontrol_et():
-    """Ana stok kontrol fonksiyonu."""
     print(f"Sayfa taranıyor: {URUN_URL}")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
@@ -82,7 +90,7 @@ def stok_kontrol_et():
         print(f">>> MÜJDE! '{TAKIP_EDILEN_BEDEN}' bedeni STOKTA GÖRÜNÜYOR!")
         return True
 
-# --- ANA ÇALIŞTIRMA MANTIĞI (RAPORLAMA İLE BİRLİKTE) ---
+# --- ANA ÇALIŞTIRMA MANTIĞI ---
 if __name__ == "__main__":
     state = load_state()
     
@@ -102,9 +110,8 @@ if __name__ == "__main__":
         print(f"!!! Bir Hata Oluştu: {e}")
         state['failed_scans'] += 1
     
-    # Raporlama zamanını kontrol et
     current_time = time.time()
-    if current_time - state.get('last_report_timestamp', 0) > 86400: # 86400 saniye = 24 saat
+    if current_time - state.get('last_report_timestamp', 0) > 86400: # 24 saat
         gunluk_rapor_gonder(state)
         state['successful_scans'] = 0
         state['failed_scans'] = 0
